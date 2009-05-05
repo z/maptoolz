@@ -1,7 +1,14 @@
 #!/bin/bash
-# Set variables
-nexuizdir="/home/tyler/svn_software/nexuiz/nexuiz_25"
+# Open Nexuiz Demo
+# by Tyler "-z-" Mulligan
+#
+# This is a nautilus script.  When placed in ~/.gnome2/nautilus-scripts
+# you will have the ability to right click >> open your nexuiz demos
+#
+
+# Set these variables
+nexuizdir="$HOME/Games/Nexuiz"
 nexuizbin="nexuiz-linux-x86_64-glx"
 
-# Run it
+# This runs it
 $nexuizdir/$nexuizbin -basedir $nexuizdir +playdemo demos/$1

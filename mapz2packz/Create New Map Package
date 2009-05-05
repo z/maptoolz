@@ -18,14 +18,19 @@
 #
 # Future versions will accomodate textures, shaders, models and the like
 #
+# Required software:
+# imagemagick
+# gtkdialog
+#
 # Usage:
 # place in this script in ~/.gnome2/nautilus-scripts
 # place nn_new_map_package.cfg in ~/.nexuiz/data
 #
 # Right click a bsp >> scripts >> Create New Map Package
+#
 
 # User set variables
-nexuizdir="/home/tyler/svn_software/nexuiz/nexuiz_25"
+nexuizdir="$HOME/Games/Nexuiz"
 nexuizbin="nexuiz-linux-x86_64-glx"
 
 # Autmatic variable setup
@@ -90,7 +95,7 @@ mkdir ~/.nexuiz/data/map_temp/$mapname/maps
 # convert and size pictures
 # radar
 convert ~/.nexuiz/data/data/gfx/$mapname"_radar.xpm" ~/.nexuiz/data/data/gfx/$mapname"_radar.tga"
-cp ~/.nexuiz/data/data/gfx/$mapname"_radar.tga" ~/.nexuiz/data/map_temp/$mapname/maps
+cp ~/.nexuiz/data/data/gfx/$mapname"_radar.tga" ~/.nexuiz/data/map_temp/$mapname/gfx/$mapname"_radar.tga"
 
 # Go through screenshots and have user select one
 cd ~/.nexuiz/data/screenshots

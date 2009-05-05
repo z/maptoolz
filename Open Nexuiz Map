@@ -1,6 +1,15 @@
 #!/bin/bash
+# Open Nexuiz Map
+# by Tyler "-z-" Mulligan
+#
+# This is a nautilus script.  When placed in ~/.gnome2/nautilus-scripts
+# you will have the ability to right click >> open your nexuiz maps
+#
+# Both bsp and pk3 are supported.
+#
+
 # Set variables
-nexuizdir="/home/tyler/svn_software/nexuiz/nexuiz_25"
+nexuizdir="$HOME/Games/Nexuiz"
 nexuizbin="nexuiz-linux-x86_64-glx"
 
 if [[ "$(echo $1|awk -F . '{print $NF}')" == "pk3" ]]; then
