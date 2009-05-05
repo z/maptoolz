@@ -1,0 +1,7 @@
+#!/bin/bash
+# Set variables
+nexuizdir="/home/tyler/svn_software/nexuiz/nexuiz_25"
+nexuizbin="nexuiz-linux-x86_64-glx"
+
+# Run it
+$nexuizdir/$nexuizbin -basedir $nexuizdir +playdemo demos/$1

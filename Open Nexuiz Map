@@ -1,0 +1,16 @@
+#!/bin/bash
+# Set variables
+nexuizdir="/home/tyler/svn_software/nexuiz/nexuiz_25"
+nexuizbin="nexuiz-linux-x86_64-glx"
+
+if [[ "$(echo $1|awk -F . '{print $NF}')" == "pk3" ]]; then
+	# Find the name of the bsp
+	mapname=$(unzip -l $1 | grep .bsp | awk '{ print $4 }' | sed 's/maps\/\([A-Za-z_0-9.-]*\)\.bsp/\1/' | grep -vi .bsp)
+fi
+
+if [[ "$(echo $1|awk -F . '{print $NF}')" == "bsp" ]]; then
+	mapname=$(basename $1 .bsp)
+fi
+
+# Run it
+$nexuizdir/$nexuizbin -basedir $nexuizdir +map $mapname

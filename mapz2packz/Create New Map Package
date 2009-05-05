@@ -1,0 +1,152 @@
+#!/bin/bash
+#
+# Mapz2packz v0.5 - An automated map packager
+#
+# Tyler "-z-" Mulligan of Nexuiz Ninjaz (www.nexuizninjaz.com)
+#
+# This script is a proof of concept I've designed to help ease the
+# process of packaging maps.  Using a combination of bash, cfgs and Nexuiz
+# commands, it automatically creates a radar image, screenshot, brings up
+# the .mapinfo file for editing and packages it all up.
+#
+# Right now, it only packages the following:
+#  - bsp
+#  - map
+#  - mapinfo
+#  - map pic
+#  - radar image
+#
+# Future versions will accomodate textures, shaders, models and the like
+#
+# Usage:
+# place in this script in ~/.gnome2/nautilus-scripts
+# place nn_new_map_package.cfg in ~/.nexuiz/data
+#
+# Right click a bsp >> scripts >> Create New Map Package
+
+# User set variables
+nexuizdir="/home/tyler/svn_software/nexuiz/nexuiz_25"
+nexuizbin="nexuiz-linux-x86_64-glx"
+
+# Autmatic variable setup
+mapname=$(basename $1 .bsp)
+filesize=$(($(stat -c %s $1)/953674)) # bytes to mb
+radar_1=$(($filesize+8)) # time until echo radar
+radar_2=$(($filesize+10)) # time until start radar
+screenshot_setup_0=$(($radar_1 * 2)) # time until echo screenshot setup
+screenshot_setup_1=$(($screenshot_setup_0 + 1)) # time until start screenshot setup
+screenshot_1=$(($screenshot_setup_1 + 5)) # time until screenshot 1
+screenshot_2=$(($screenshot_1 + 7)) # time until screenshot 2
+screenshot_3=$(($screenshot_1 + 10)) # time until screenshot 3
+screenshot_4=$(($screenshot_1 + 13)) # time until screenshot 4
+screenshot_5=$(($screenshot_1 + 16)) # time until screenshot 5
+screenshot_6=$(($screenshot_1 + 19)) # time until screenshot 6
+screenshots_done=$(($screenshot_6 + 22)) # time until start screenshot
+final_time=$(($radar_1 * 7)) # time until start screenshot
+
+# backup Nexuiz config
+cp ~/.nexuiz/data/config.cfg ~/.nexuiz/data/config_backup.cfg
+
+# if the variable file exists, remove it
+if [[ -f ~/.nexuiz/data/nn_map_package_vars.cfg ]]; then
+	rm ~/.nexuiz/data/nn_map_package_vars.cfg
+fi
+
+# Add vars to temp cfg
+echo "set nn_bsp_name \"$mapname\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_radar_1 \"$radar_1\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_radar_2 \"$radar_2\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshot_setup_0 \"$screenshot_setup_0\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshot_setup_1 \"$screenshot_setup_1\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshot_1 \"$screenshot_1\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshot_2 \"$screenshot_2\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshot_3 \"$screenshot_3\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshot_4 \"$screenshot_4\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshot_5 \"$screenshot_5\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshot_6 \"$screenshot_6\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_screenshots_done \"$screenshots_done\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_final_time \"$final_time\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+echo "set nn_bsp_size \"$filesize\"" >> ~/.nexuiz/data/nn_map_package_vars.cfg
+
+# Run it
+$nexuizdir/$nexuizbin -basedir $nexuizdir +exec nn_new_map_package.cfg +map $mapname
+
+####
+# The Aftermath
+############################
+
+# create temp map folder if it doesn't exist
+if [[ ! -d ~/.nexuiz/data/map_temp ]]; then
+	mkdir ~/.nexuiz/data/map_temp
+fi
+# if a folder for this map already exists, remove it to avoid conflicts
+if [[ -d ~/.nexuiz/data/map_temp/$mapname ]]; then
+	rm -R ~/.nexuiz/data/map_temp/$mapname
+fi
+# create map folders
+mkdir ~/.nexuiz/data/map_temp/$mapname
+mkdir ~/.nexuiz/data/map_temp/$mapname/maps
+
+# convert and size pictures
+# radar
+convert ~/.nexuiz/data/data/gfx/$mapname"_radar.xpm" ~/.nexuiz/data/data/gfx/$mapname"_radar.tga"
+cp ~/.nexuiz/data/data/gfx/$mapname"_radar.tga" ~/.nexuiz/data/map_temp/$mapname/maps
+
+# Go through screenshots and have user select one
+cd ~/.nexuiz/data/screenshots
+i=1
+append='
+<hbox>'
+for image in $(ls ~/.nexuiz/data/screenshots/ |tail -n6); do
+	mogrify -resize 640x480 -crop 400x400+0+0 ~/.nexuiz/data/screenshots/$image
+	append=$append'
+	<button>
+      <input file>'$image'</input>
+        <action type="exit">'$image'</action>
+    </button>'
+	if [[ $(expr $i % 3) == 0 ]]; then
+		append=$append'
+		</hbox>
+		<hbox>
+		'
+	fi
+	i=$(($i+1))
+done
+
+export MAIN_DIALOG='
+<window title="mapz2packz - Choose your Map Pic"> 
+ <vbox>
+  <hbox>
+    <text>
+      <label>Click an image below to add it to your map package</label>
+    </text>
+  </hbox>'$append'
+     <text>
+      <label>Click an image above to add it to your map package</label>
+    </text> 
+  </hbox>
+ </vbox>
+</window>
+'
+# display picker
+selected_string=$(gtkdialog --program=MAIN_DIALOG)
+
+selected_image=$(echo $selected_string |awk -F "\"" '{ print $2 }')
+
+# copy selected to map folder
+cp ~/.nexuiz/data/screenshots/$selected_image ~/.nexuiz/data/map_temp/$mapname/maps/$mapname".jpg"
+
+# open mapinfo for user to edit details
+gedit ~/.nexuiz/data/data/maps/$mapname".mapinfo"
+cp ~/.nexuiz/data/data/maps/$mapname".mapinfo" ~/.nexuiz/data/map_temp/$mapname/maps
+
+# copy bsp and map
+cp ~/.nexuiz/data/maps/$mapname".bsp" ~/.nexuiz/data/map_temp/$mapname/maps
+cp ~/.nexuiz/data/maps/$mapname".map" ~/.nexuiz/data/map_temp/$mapname/maps
+
+# change dir and zip it
+cd ~/.nexuiz/data/map_temp/$mapname
+zip -r $mapname".pk3" *
+
+# copy to data dir
+cp $mapname".pk3" ~/.nexuiz/data
